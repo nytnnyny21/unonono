@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>unonono</title>
+  <style>
+    body {
+      background-color: pink;
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 20px;
+    }
+    .card {
+      display: inline-block;
+      margin: 5px;
+      padding: 15px 20px;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      cursor: pointer;
+      font-size: 20px;
+      user-select: none;
+    }
+    .red { background-color: red; }
+    .green { background-color: green; }
+    .blue { background-color: blue; }
+    .yellow { background-color: goldenrod; }
+
+    #top-card-display {
+      font-size: 24px;
+      margin: 20px 0;
+    }
+    #top-card-graphic {
+      display: inline-block;
+      padding: 20px;
+      border-radius: 15px;
+      color: white;
+      font-size: 36px;
+      font-weight: bold;
+    }
+
+    #player-hand { margin-top: 20px; }
+    #message { margin-top: 20px; font-size: 18px; min-height: 30px; }
+    button {
+      padding: 10px 20px;
+      margin-top: 10px;
+      font-size: 16px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+    }
+    h2 { margin-top: 40px; }
+  </style>
+</head>
+<body>
+  <h1>tui biết em đang buồn 🥺 nên tui sẽ bù đắp cho em bằng cái cùi bắp này hehehehe</h1>
+
+  <div id="top-card-display">
+    lá trên cùng:
+    <div id="top-card-graphic"></div>
+  </div>
+
+  <h2>bài của em nè:</h2>
+  <div id="player-hand"></div>
+  <button onclick="drawCard()">hong có bài hả, z bốc bài i nha</button>
+
+  <h2>bài của tui, em hong được nhìn nha 😤</h2>
+  <div id="bot-count">tui còn <span id="bot-count-number"></span> lá 🫢</div>
+
+  <div id="message"></div>
+
+  <script>
+    const colors = ['red', 'green', 'blue', 'yellow'];
+    let playerHand = [];
+    let botHand = [];
+    let topCard = null;
+    let usedCards = new Set();
+
+    function generateUniqueCard(existingSet) {
+      let card;
+      let key;
+      let tries = 0;
+      do {
+        const color = colors[Math.floor(Math.random() * colors.length)];
+        const number = Math.floor(Math.random() * 10);
+        card = { color, number };
+        key = color + '-' + number;
+        tries++;
+        if (tries > 100) break; // fallback
+      } while (existingSet.has(key));
+      existingSet.add(key);
+      return card;
+    }
+
+    function renderCard(card, index) {
+      return `<div class="card ${card.color}" onclick="playCard(${index})">${card.number}</div>`;
+    }
+
+    function updateUI() {
+      document.getElementById('player-hand').innerHTML = playerHand.map((c, i) => renderCard(c, i)).join('');
+      document.getElementById('top-card-graphic').className = `card ${topCard.color}`;
+      document.getElementById('top-card-graphic').innerText = topCard.number;
+      document.getElementById('bot-count-number').innerText = botHand.length;
+    }
+
+    function playCard(index) {
+      const card = playerHand[index];
+      if (card.color === topCard.color || card.number === topCard.number) {
+        topCard = card;
+        playerHand.splice(index, 1);
+        updateUI();
+
+        if (playerHand.length === 0) {
+          document.getElementById('message').innerText = 'em thắng rùi đó yayayayayayya!!! 🥳🥳🥳';
+          setTimeout(initGame, 2000);
+          return;
+        }
+
+        setTimeout(botTurn, 1000);
+      } else {
+        alert('lá đó hong đánh được đâu em 😢');
+      }
+    }
+
+    function drawCard() {
+      const newCard = generateUniqueCard(usedCards);
+      playerHand.push(newCard);
+      updateUI();
+
+      const playable = playerHand.find(c => c.color === topCard.color || c.number === topCard.number);
+      if (playable) {
+        document.getElementById('message').innerText = 'em vừa bốc được lá có thể đánh đó nha';
+      } else {
+        setTimeout(botTurn, 1000);
+      }
+    }
+
+    function botTurn() {
+      const playable = botHand.find(c => c.color === topCard.color || c.number === topCard.number);
+      if (playable) {
+        topCard = playable;
+        botHand.splice(botHand.indexOf(playable), 1);
+        document.getElementById('message').innerText = `tui đánh 1 lá bí mật, đố em biết được 😌`;
+
+        if (botHand.length === 0) {
+          document.getElementById('message').innerText = 'tui thắng rùi 😭 nhưng tui vẫn thương người mình thắng nha';
+          setTimeout(initGame, 2000);
+          return;
+        }
+      } else {
+        const drawn = generateUniqueCard(usedCards);
+        botHand.push(drawn);
+        document.getElementById('message').innerText = 'tui bốc bài vì hổng có lá để đánh 🥲';
+      }
+      updateUI();
+    }
+
+    function initGame() {
+      usedCards = new Set();
+      playerHand = Array.from({ length: 5 }, () => generateUniqueCard(usedCards));
+      botHand = Array.from({ length: 5 }, () => generateUniqueCard(usedCards));
+      topCard = generateUniqueCard(usedCards);
+      updateUI();
+      document.getElementById('message').innerText = '';
+    }
+
+
+    window.onload = initGame;
+  </script>
+</body>
+</html>
